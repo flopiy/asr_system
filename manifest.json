@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "ASR Tab Capture",
+  "version": "1.1",
+  "permissions": [
+  "tabCapture",
+  "tabs",
+  "storage",
+  "activeTab"
+  ],
+  "action": {
+    "default_popup": "popap.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "web_accessible_resources": [
+    {
+    "resources": ["dashboard.html"],
+    "matches": ["<all_urls>"]
+    }
+  ]
+}
