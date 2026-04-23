@@ -8,33 +8,28 @@ import json
 from faster_whisper import WhisperModel
 
 # === КОНФІГ ===
-# Render дає мало RAM — використовуємо base модель
-MODEL_SIZE = "base"  # або "tiny" якщо base не влізе
+MODEL_SIZE = os.environ.get("MODEL_SIZE", "tiny")  # tiny для Render Free
 DEVICE = "cpu"
 COMPUTE_TYPE = "int8"
+PORT = int(os.environ.get("PORT", 8765))
 
-print(f"🚀 Render | {DEVICE} | {MODEL_SIZE}")
+print(f"🚀 Render | {DEVICE} | {MODEL_SIZE} | Порт: {PORT}")
 
-# === ЗАВАНТАЖЕННЯ МОДЕЛІ (при старті) ===
+# === МОДЕЛЬ ===
 print("⏳ Завантаження Whisper...")
 whisper = WhisperModel(MODEL_SIZE, device=DEVICE, compute_type=COMPUTE_TYPE)
-
-# Без speechbrain на Render (економія RAM) — простий спікер-діалог
-known_speakers = {}
-speaker_counter = 1
-
-def get_speaker():
-    global speaker_counter
-    name = f"Спікер {speaker_counter}"
-    speaker_counter += 1
-    if speaker_counter > 2:
-        speaker_counter = 1
-    return name
 
 # === ЛОГІКА ===
 SAMPLE_RATE = 16000
 CHUNK_DURATION = 3
 SILENCE_RMS = 0.01
+speaker_counter = 1
+
+def get_speaker():
+    global speaker_counter
+    name = f"Спікер {speaker_counter}"
+    speaker_counter = (speaker_counter % 2) + 1
+    return name
 
 def clean_text(text):
     STOP_WORDS = ["дякую за перегляд", "дякую", "раді вас", "підписуйтесь"]
@@ -52,12 +47,11 @@ def is_silence(audio_data):
     rms = np.sqrt(np.mean(audio_data ** 2))
     return rms < SILENCE_RMS
 
-# === WEBSOCKET HANDLER ===
+# === WEBSOCKET ===
 async def websocket_handler(request):
     ws = web.WebSocketResponse()
     await ws.prepare(request)
-    
-    print(f"🔌 Клієнт підключився")
+    print("🔌 Клієнт підключився")
     
     buffer_chunks = []
     total_samples = 0
@@ -87,32 +81,25 @@ async def websocket_handler(request):
                     
                     if text:
                         speaker = get_speaker()
-                        response = {
-                            "text": f"[{speaker}]: {text}",
-                            "speaker": speaker
-                        }
+                        response = {"text": f"[{speaker}]: {text}", "speaker": speaker}
                         print(f"🎤 {response['text']}")
                         await ws.send_str(json.dumps(response))
                 except Exception as e:
                     print(f"⚠️ Помилка: {e}")
                     
         elif msg.type == aiohttp.WSMsgType.ERROR:
-            print(f"🔴 WebSocket помилка: {ws.exception()}")
+            print(f"🔴 Помилка: {ws.exception()}")
     
     print("🔌 Клієнт відключився")
     return ws
 
-# === HTTP HEALTH CHECK (Render вимагає) ===
+# === HTTP ===
 async def health_check(request):
     return web.Response(text="OK", status=200)
 
-# === APP ===
 app = web.Application()
 app.router.add_get('/ws', websocket_handler)
 app.router.add_get('/', health_check)
-
-# === ЗАПУСК ===
-PORT = int(os.environ.get("PORT", 8765))
 
 if __name__ == "__main__":
     print(f"🚀 Сервер на порту {PORT}")
