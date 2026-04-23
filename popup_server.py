@@ -82,7 +82,7 @@ async def websocket_handler(request):
                 
                 if whisper:
                     try:
-                        segments, _ = whisper.transcribe(audio_buffer, beam_size=5, language="uk")
+                        segments, _ = whisper.transcribe(audio_buffer,beam_size=5,language="uk",condition_on_previous_text=False,vad_filter=True,vad_parameters=dict(min_silence_duration_ms=500))
                         raw_text = "".join([s.text for s in segments]).strip()
                         text = clean_text(raw_text)
                     except Exception as e:
