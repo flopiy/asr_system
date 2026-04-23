@@ -121,7 +121,6 @@ app.router.add_get('/health', health_check)  # Health check
 app.router.add_get('/ws', websocket_handler)   # WebSocket
 
 # === ЗАПУСК ===
-# === ЗАПУСК ===
 if __name__ == "__main__":
     print(f"🚀 Старт сервера на 0.0.0.0:{PORT}")
     print(f"📍 Health check: http://0.0.0.0:{PORT}/health")
