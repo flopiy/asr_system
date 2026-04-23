@@ -3,43 +3,17 @@ import asyncio
 import aiohttp
 from aiohttp import web
 import numpy as np
-import torch
 import json
-from faster_whisper import WhisperModel
 
 # === КОНФІГ ===
-MODEL_SIZE = os.environ.get("MODEL_SIZE", "tiny")  # tiny для Render Free
-DEVICE = "cpu"
-COMPUTE_TYPE = "int8"
 PORT = int(os.environ.get("PORT", 8765))
 
-print(f"🚀 Render | {DEVICE} | {MODEL_SIZE} | Порт: {PORT}")
+print(f"🚀 Render | Порт: {PORT}")
 
-# === МОДЕЛЬ ===
-print("⏳ Завантаження Whisper...")
-whisper = WhisperModel(MODEL_SIZE, device=DEVICE, compute_type=COMPUTE_TYPE)
-
-# === ЛОГІКА ===
+# === ЛОГІКА (без ML, тестовий сервер) ===
 SAMPLE_RATE = 16000
 CHUNK_DURATION = 3
 SILENCE_RMS = 0.01
-speaker_counter = 1
-
-def get_speaker():
-    global speaker_counter
-    name = f"Спікер {speaker_counter}"
-    speaker_counter = (speaker_counter % 2) + 1
-    return name
-
-def clean_text(text):
-    STOP_WORDS = ["дякую за перегляд", "дякую", "раді вас", "підписуйтесь"]
-    t_lower = text.lower().strip()
-    if len(t_lower) < 2:
-        return ""
-    for word in STOP_WORDS:
-        if word in t_lower:
-            return ""
-    return text
 
 def is_silence(audio_data):
     if len(audio_data) == 0:
@@ -74,18 +48,10 @@ async def websocket_handler(request):
                 if is_silence(audio_buffer):
                     continue
                 
-                try:
-                    segments, _ = whisper.transcribe(audio_buffer, beam_size=5, language="uk")
-                    raw_text = "".join([s.text for s in segments]).strip()
-                    text = clean_text(raw_text)
-                    
-                    if text:
-                        speaker = get_speaker()
-                        response = {"text": f"[{speaker}]: {text}", "speaker": speaker}
-                        print(f"🎤 {response['text']}")
-                        await ws.send_str(json.dumps(response))
-                except Exception as e:
-                    print(f"⚠️ Помилка: {e}")
+                # Тимчасово без Whisper — просто ехо
+                response = {"text": "[Тест]: Аудіо отримано"}
+                print(f"🎤 {response['text']}")
+                await ws.send_str(json.dumps(response))
                     
         elif msg.type == aiohttp.WSMsgType.ERROR:
             print(f"🔴 Помилка: {ws.exception()}")
