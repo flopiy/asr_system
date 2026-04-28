@@ -33,7 +33,6 @@ Chrome-розширення для розпізнавання мови в реа
 - 🤖 **AI-аналіз** через LLM (OpenAI, Anthropic, OpenRouter, Ollama)
 - 📄 **Експорт результатів** у TXT, HTML/DOC
 - 🌐 **WebSocket-з'єднання** для стрімінгу аудіо
-- 🔥 **Гарячі клавіші** (Alt+Shift+R)
 
 ---
 
