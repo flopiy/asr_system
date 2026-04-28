@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="popup.css">
+  <base target="_blank">
+<base target="_blank">
+</head>
+<body>
+  <div class="app">
+    <nav class="sidebar">
+      <button class="nav-item active" data-view="home" title="Головна">
+        <svg viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+        <span class="tooltip">Головна</span>
+      </button>
+      
+      <button class="nav-item" data-view="transcript" title="Транскрипт">
+        <svg viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        <span class="tooltip">Транскрипт</span>
+      </button>
+      
+      <button class="nav-item agent-nav" data-view="agent" title="Manus Agent">
+        <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20 10 10 0 000-20z"/><path d="M12 6v6l4 2"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/></svg>
+        <span class="tooltip">Manus Agent</span>
+      </button>
+      
+      <div class="sidebar-divider"></div>
+      
+      <button class="nav-item" data-view="server" title="Сервер">
+        <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
+        <span class="tooltip">Сервер</span>
+      </button>
+      
+      <button class="nav-item" data-view="llm" title="LLM">
+        <svg viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        <span class="tooltip">LLM</span>
+      </button>
+    </nav>
+
+    <main class="content">
+      
+      <section class="view active" id="view-home">
+        <div style="text-align: center; margin-bottom: 8px;">
+          <h2>Prosodiscribe</h2>
+          <p class="subtitle">Розпізнавання мови з вкладки браузера</p>
+        </div>
+
+        <div class="card" style="text-align: center;">
+          <div style="margin-bottom: 12px; display: flex; align-items: center; justify-content: center; gap: 12px;">
+            <span class="conn-indicator">
+              <span id="serverConnectionStatus" class="conn-dot disconnected"></span>
+              <span id="serverStatusText">Сервер відключений</span>
+            </span>
+            <button id="connectServerBtn" class="btn btn-primary btn-sm">Підключити</button>
+          </div>
+
+          <div class="record-wrapper">
+            <button id="start" class="record-btn" disabled>
+              <svg viewBox="0 0 24 24"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+            </button>
+            <span id="status" class="status-badge">
+              <span class="status-dot"></span>
+              Ready
+            </span>
+            <p class="record-label">1. Підключіться до сервера<br>2. Натисніть для початку запису</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header accent">
+            <svg viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            Транскрипт
+          </div>
+          <textarea id="transcript-home" readonly placeholder=" "></textarea>
+        </div>
+
+        <div class="card">
+          <div class="card-header accent">
+            <svg viewBox="0 0 24 24"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            Швидкі дії
+          </div>
+          <div class="btn-group">
+            <button id="processText" class="btn btn-primary" disabled>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+              Обробити LLM
+            </button>
+            <button id="sendToManusBtn" class="btn btn-agent" disabled>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+              Відправити в Manus
+            </button>
+            <button id="download-txt" class="btn btn-secondary" disabled>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              TXT
+            </button>
+            <button id="download-doc" class="btn btn-secondary" disabled>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              DOC
+            </button>
+            <button id="clear-history" class="btn btn-danger">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+              Очистити
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="view-transcript">
+        <h2 style="margin-bottom: 12px;">Транскрипт</h2>
+        <textarea id="transcript-display" readonly placeholder=" "></textarea>
+        
+        <div class="section-header">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          Результат LLM
+        </div>
+        <textarea id="llm-output" class="llm-output" readonly placeholder=" "></textarea>
+        
+        <div class="btn-group" style="margin-top: 12px;">
+          <button id="processText2" class="btn btn-primary" disabled>Обробити LLM</button>
+          <button id="sendToManusBtn2" class="btn btn-agent" disabled>Відправити в Manus</button>
+          <button id="download-txt2" class="btn btn-secondary" disabled>TXT</button>
+          <button id="download-doc2" class="btn btn-secondary" disabled>DOC</button>
+          <button id="clear-history2" class="btn btn-danger">Очистити</button>
+        </div>
+      </section>
+
+      <section class="view" id="view-agent">
+        <h2 style="margin-bottom: 4px;">Manus Agent</h2>
+        <p class="subtitle">AI-агент для глибокого аналізу транскрипції через Manus API</p>
+
+        <div class="card">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+            <span class="conn-indicator">
+              <span id="manusConnectionStatus" class="conn-dot disconnected"></span>
+              <span id="manusStatusText">Manus не активний</span>
+            </span>
+            <span id="manusTaskStatus" class="task-status" style="display:none;"></span>
+          </div>
+
+          <div class="agent-presets" style="margin-bottom: 16px;">
+            <button class="agent-preset-card active" data-preset="meeting">
+              <span class="ap-icon">📅</span>
+              <span class="ap-name">Meeting Assistant</span>
+              <span class="ap-desc">Виділяє задачі, рішення, дедлайни</span>
+            </button>
+            <button class="agent-preset-card" data-preset="research">
+              <span class="ap-icon">🔬</span>
+              <span class="ap-name">Research Agent</span>
+              <span class="ap-desc">Аналізує факти та джерела</span>
+            </button>
+            <button class="agent-preset-card" data-preset="coding">
+              <span class="ap-icon">💻</span>
+              <span class="ap-name">Code Reviewer</span>
+              <span class="ap-desc">Пояснює код та знаходить баги</span>
+            </button>
+            <button class="agent-preset-card" data-preset="custom">
+              <span class="ap-icon">⚙️</span>
+              <span class="ap-name">Custom Agent</span>
+              <span class="ap-desc">Власний системний промпт</span>
+            </button>
+          </div>
+
+          <div class="form-group">
+            <label>Manus API Key</label>
+            <input type="password" id="manusApiKey" placeholder="Введіть x-manus-api-key...">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Agent Profile</label>
+              <select id="manusProfile">
+                <option value="manus-1.6">manus-1.6 (стандарт)</option>
+                <option value="manus-1.6-lite">manus-1.6-lite (швидкий)</option>
+                <option value="manus-1.6-max">manus-1.6-max (макс. можливості)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Мова агента (Manus)</label>
+              <select id="manusLocale">
+                <option value="auto">Автовизначення</option>
+                <option value="uk">Українська</option>
+                <option value="en">English</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Системний промпт / Інструкція</label>
+            <textarea id="manusPrompt" rows="4">Проаналізуй надану транскрипцію розмови. Виділи ключові моменти: прийняті рішення, поставлені задачі, відповідальні особи, дедлайни та питання без відповіді. Відповідай українською мовою.</textarea>
+          </div>
+
+          <label class="checkbox">
+            <input type="checkbox" id="manusAutoSend">
+            <span>Автоматично відправляти в Manus після зупинки запису</span>
+          </label>
+          
+          <label class="checkbox">
+            <input type="checkbox" id="manusInteractive" checked>
+            <span>Інтерактивний режим (agent може задавати уточнюючі питання)</span>
+          </label>
+
+          <div class="btn-group" style="margin-top: 12px;">
+            <button id="sendToManusBtn3" class="btn btn-agent" disabled>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+              Запустити аналіз
+            </button>
+            <button id="testManus" class="btn btn-secondary">Тест API</button>
+            <button id="saveManusConfig" class="btn btn-secondary">Зберегти конфіг</button>
+          </div>
+        </div>
+
+        <!-- DOCUMENTS: Import / Export -->
+        <div class="card">
+          <div class="card-header agent">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <path d="M12 18v-6"/>
+              <path d="M9 15l3-3 3 3"/>
+            </svg>
+            Документи для аналізу
+          </div>
+          
+          <!-- File Upload -->
+          <div class="form-group">
+            <label>Імпорт документа</label>
+            <div class="file-upload-zone" id="dropZone">
+              <input type="file" id="docImport" accept=".txt,.md,.doc,.docx,.pdf,.json,.csv,.py,.js,.html,.css,.xml,.yaml,.yml" multiple style="display:none;">
+              <div class="upload-placeholder">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                  <polyline points="17 8 12 3 7 8"/>
+                  <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+                <p>Перетягніть файли сюди або <span class="upload-link">натисніть для вибору</span></p>
+                <small>Підтримується: TXT, MD, DOC, PDF, JSON, CSV, код</small>
+              </div>
+            </div>
+          </div>
+
+          <!-- Attached Documents List -->
+          <div id="attachedDocs" class="attached-docs" style="display:none;">
+            <div class="section-header" style="margin-top:0;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
+              Прикріплені документи
+            </div>
+            <div id="docsList" class="docs-list"></div>
+            <div class="btn-group" style="margin-top: 10px;">
+              <button id="clearDocs" class="btn btn-danger btn-sm">Очистити всі</button>
+              <button id="exportDocs" class="btn btn-secondary btn-sm">📦 Експорт JSON</button>
+            </div>
+          </div>
+
+          <!-- Document Preview -->
+          <div id="docPreview" class="doc-preview" style="display:none;">
+            <div class="preview-header">
+              <span id="previewName">document.txt</span>
+              <button id="closePreview" class="btn-icon">✕</button>
+            </div>
+            <textarea id="previewContent" readonly></textarea>
+          </div>
+        </div>
+        <!-- КІНЕЦЬ БЛОКУ ДОКУМЕНТІВ ДЛЯ АНАЛІЗУ -->
+
+        <!-- Received Documents from Manus — ОКРЕМИЙ БЛОК -->
+        <div class="card" id="receivedDocsCard" style="display:none;">
+          <div class="card-header agent">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+            </svg>
+            Посилання розмови
+          </div>
+          <div id="receivedDocsList" class="docs-list"></div>
+          <div class="export-hint" style="margin-top:10px;">
+            📥 Файли, згенеровані агентом під час виконання задачі. Натисніть для завантаження.
+          </div>
+        </div>
+
+        <!-- Agent Log -->
+        <div class="card">
+          <div class="card-header agent">
+            <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20 10 10 0 000-20z"/><path d="M12 6v6l4 2"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/></svg>
+            Лог виконання задачі
+          </div>
+          <div id="agentLog" class="agent-log">
+            <div class="agent-log-entry" style="text-align:center; opacity:0.5;">Лог порожній. Відправте транскрипт для аналізу.</div>
+          </div>
+        </div>
+
+        <!-- Agent Response -->
+        <div class="card">
+          <div class="card-header agent">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            Відповідь агента
+          </div>
+          <textarea id="agent-response" class="llm-output" readonly placeholder=" "></textarea>
+
+          <!-- Continue Dialog -->
+          <div id="continueDialogBlock" class="continue-dialog" style="display:none;">
+            <div class="form-group" style="margin-bottom:10px;">
+              <label>Ваша відповідь агенту</label>
+              <textarea id="agentReplyInput" rows="2" placeholder="Введіть відповідь на запитання агента..."></textarea>
+            </div>
+            <div class="btn-group">
+              <button id="continueDialogBtn" class="btn btn-agent">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+                Продовжити діалог
+              </button>
+              <button id="cancelDialogBtn" class="btn btn-secondary btn-sm">Скасувати</button>
+            </div>
+            <div id="dialogSendStatus" class="dialog-status" style="display:none;"></div>
+          </div>
+        </div>
+                <!-- Task History -->
+        <div class="card">
+          <div class="card-header agent">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Історія задач
+          </div>
+          <div id="taskHistoryList" class="task-history-list">
+            <p style="text-align:center; opacity:0.5; padding:10px;">Історія порожня</p>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Manus API Key</label>
+          <div class="api-key-row">
+            <select id="manusApiKeySelect">
+              <option value="">Виберіть ключ...</option>
+            </select>
+            <button id="addManusApiKey" class="btn btn-sm" title="Додати новий ключ">+</button>
+            <button id="removeManusApiKey" class="btn btn-sm btn-danger" title="Видалити ключ">🗑</button>
+          </div>
+          <input type="password" id="manusApiKey" placeholder="Або введіть новий x-manus-api-key..." style="margin-top: 10px;">
+          <div id="manusApiKeysList"></div>
+        </div>
+      </section>
+      
+      <!-- VIEW: Server -->
+      <section class="view" id="view-server">
+        <h2 style="margin-bottom: 4px;">Сервер</h2>
+        <p class="subtitle">Налаштування WebSocket з'єднання ASR</p>
+
+        <div class="card">
+          <div class="form-group">
+            <label>Адреса сервера</label>
+            <div class="form-row">
+              <input type="text" id="serverUrl" value="wss://asr-system-jcku.onrender.com/ws" placeholder="wss://asr-system-jcku.onrender.com/ws" style="flex:1;">
+              <button id="testConnection" class="btn btn-sm" style="flex:0 0 auto;">🔌 Тест</button>
+            </div>
+          </div>
+
+          <div class="presets" style="margin-bottom: 14px;">
+            <button class="preset active" data-url="wss://asr-system-jcku.onrender.com/ws">Локальний</button>
+            <button class="preset" data-url="wss://asr-system-jcku.onrender.com/ws">:8000</button>
+            <button class="preset" data-url="wss://asr.example.com">HTTPS</button>
+            <button class="preset" data-url="wss://192.168.1.100:8765">Мережа</button>
+          </div>
+
+          <label class="checkbox">
+            <input type="checkbox" id="autoConnect">
+            <span>Автопідключення при старті</span>
+          </label>
+          <label class="checkbox">
+            <input type="checkbox" id="reconnectOnClose">
+            <span>Перепідключення при розриві</span>
+          </label>
+        </div>
+      </section>
+
+      <!-- VIEW: LLM -->
+      <section class="view" id="view-llm">
+        <h2 style="margin-bottom: 4px;">LLM</h2>
+        <p class="subtitle">Пост-обробка розпізнаного тексту через стандартні провайдери</p>
+
+        <div id="processingIndicator" class="processing">
+          <div class="spinner"></div>
+          <span>Обробка тексту ШІ...</span>
+        </div>
+
+        <div class="card">
+          <div class="form-group">
+            <label>Провайдер</label>
+            <select id="llmProvider">
+              <option value="openrouter">OpenRouter</option>
+              <option value="openai">OpenAI</option>
+              <option value="anthropic">Anthropic Claude</option>
+              <option value="local">Локальний (Ollama)</option>
+              <option value="custom">Свій API</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>API Key</label>
+            <input type="password" id="apiKey" placeholder="sk-...">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Модель</label>
+              <input type="text" id="modelName" placeholder="gpt-4, claude-3...">
+            </div>
+            <div class="form-group">
+              <label>Endpoint</label>
+              <input type="url" id="apiEndpoint" placeholder="https://...">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Системний промпт</label>
+            <textarea id="systemPrompt" rows="3">Ти професійний редактор. Виправ граматичні, пунктуаційні та стилістичні помилки. Збережи зміст і сенс тексту. Відповідай тільки виправленим текстом.</textarea>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Температура</label>
+              <input type="number" id="temperature" step="0.1" min="0" max="2" value="0.3">
+            </div>
+            <div class="form-group">
+              <label>Макс. токенів</label>
+              <input type="number" id="maxTokens" value="1000">
+            </div>
+          </div>
+
+          <label class="checkbox">
+            <input type="checkbox" id="autoProcess" checked>
+            <span>Автообробка після транскрибації</span>
+          </label>
+          <label class="checkbox">
+            <input type="checkbox" id="saveHistory">
+            <span>Зберігати історію обробки</span>
+          </label>
+        </div>
+
+        <div class="card">
+          <div class="btn-group">
+            <button id="saveConfig" class="btn btn-secondary">💾 Зберегти конфіг</button>
+            <button id="testLLM" class="btn btn-secondary">🔍 Тест з'єднання</button>
+          </div>
+        </div>
+
+        <div class="card" id="savedConfigs">
+          <div class="card-header accent">
+            <svg viewBox="0 0 24 24"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+            Збережені конфігурації
+          </div>
+          <div id="configsList">
+            <p style="font-size:12px; color:var(--text-secondary); text-align:center; padding: 10px;">Немає збережених конфігурацій</p>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+  
+  <script src="popup-db.js"></script>
+  <script src="popup-ui.js"></script>
+  <script src="popup-manus.js"></script>
+  <script src="popup-main.js"></script>
+</body>
+</html>

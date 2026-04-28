@@ -1,0 +1,38 @@
+{
+  "manifest_version": 3,
+  "name": "Prosodiscribe",
+  "version": "3.3",
+  "permissions": [
+    "tabCapture",
+    "tabs",
+    "storage",
+    "offscreen",
+    "downloads",
+    "unlimitedStorage"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popap.html",
+    "default_title": "Відкрити ASR"
+  },
+  "commands": {
+    "toggle_recording": {
+      "suggested_key": {
+        "default": "Alt+Shift+R",
+        "mac": "Alt+Shift+R"
+      },
+      "description": "Увімкнути/вимкнути запис ASR"
+    }
+  },
+  "icons": {
+    "16": "icon16.png",
+    "32": "icon32.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  }
+}
