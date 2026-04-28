@@ -1,0 +1,8 @@
+redis>=5.0
+fastapi>=0.100
+uvicorn>=0.23
+faster-whisper
+speechbrain
+numpy
+torch
+torchaudio
