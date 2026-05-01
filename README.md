@@ -157,7 +157,7 @@ API_PORT=8000 REDIS_HOST=localhost REDIS_PORT=6379 WHISPER_MODEL_SIZE=large DEVI
 
 ---
 
-## ⚙️ Налаштування
+## Налаштування
 
 ### Змінні середовища сервера
 
@@ -211,7 +211,7 @@ API_PORT=8000 REDIS_HOST=localhost REDIS_PORT=6379 WHISPER_MODEL_SIZE=large DEVI
 
 ---
 
-## 📡 API
+## API
 
 ### WebSocket Audio Stream (локальний)
 
