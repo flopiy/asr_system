@@ -12,6 +12,12 @@ let isManualClose = false;
 
 console.log('[Offscreen] Script loaded');
 
+try {
+  chrome.runtime.sendMessage({ fromOffscreen: true, type: 'ready' });
+} catch (e) {
+  console.warn('[Offscreen] Не вдалося надіслати ready:', e);
+}
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.target !== 'offscreen') return false;
   
