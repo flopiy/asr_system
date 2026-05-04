@@ -1,4 +1,4 @@
-let currentServerUrl = "ws://localhost:8765";
+let currentServerUrl = "ws://localhost:8000";
 let activeTabId = null;
 let offscreenReady = false;
 
@@ -240,6 +240,8 @@ function initBackground() {
   chrome.storage.local.get(['lastServerUrl', 'autoConnect'], async (res) => {
     if (res.lastServerUrl) {
       currentServerUrl = res.lastServerUrl;
+    } else {
+      await chrome.storage.local.set({ lastServerUrl: currentServerUrl });
     }
     
     if (res.autoConnect) {
