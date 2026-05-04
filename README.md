@@ -1,9 +1,10 @@
-# Prosodiscribe — Real-time Speech Recognition System
+# Prosodiscribe
 
 Chrome-розширення для розпізнавання мови в реальному часі з локальним сервером на базі Whisper та інтеграцією з LLM.
 
 ![Python](https://img.shields.io/badge/python-3.8+-blue)
 ![Chrome](https://img.shields.io/badge/chrome-extension-yellow)
+![License](https://img.shields.io/badge/license-MIT-green)
 
 ---
 
@@ -12,27 +13,32 @@ Chrome-розширення для розпізнавання мови в реа
 - [Опис](#опис)
 - [Особливості](#особливості)
 - [Архітектура](#архітектура)
+- [Вимоги](#вимоги)
 - [Локальний запуск](#локальний-запуск)
 - [Налаштування](#налаштування)
 - [Використання](#використання)
 - [API](#api)
 - [Структура проєкту](#структура-проєкту)
 - [Розробка](#розробка)
+- [Ліцензія](#ліцензія)
 
 ---
 
 ## Опис
 
-**Prosodiscribe** — це система для транскрипції аудіо з браузера в реальному часі. Розширення захоплює аудіо з вкладок Chrome, відправляє його через WebSocket на локальний сервер, де відбувається розпізнавання мови за допомогою Whisper (faster-whisper) та ідентифікація спікерів через SpeechBrain. Підтримує інтеграцію з LLM-провайдерами та Manus AI Agent для аналізу транскрипцій.
+**Prosodiscribe** — система для транскрипції аудіо з браузера в реальному часі. Розширення захоплює аудіо з вкладок Chrome, відправляє його через WebSocket на локальний сервер, де відбувається розпізнавання мови за допомогою [faster-whisper](https://github.com/SYSTRAN/faster-whisper) та ідентифікація спікерів через SpeechBrain. Підтримує інтеграцію з LLM-провайдерами та Manus AI Agent для аналізу транскрипцій.
 
 ### Ключові можливості
 
-- **Захоплення аудіо** з будь-якої вкладки браузера
-- **Розпізнавання в реальному часі** через Whisper
-- **Ідентифікація спікерів** (до 8 унікальних голосів)
-- **AI-аналіз** через LLM (OpenAI, Anthropic, OpenRouter, Ollama)
-- **Експорт результатів** у TXT, HTML/DOC
-- **WebSocket-з'єднання** для стрімінгу аудіо
+- **Захоплення аудіо** — з будь-якої вкладки браузера через `tabCapture` API
+- **Розпізнавання в реальному часі** — через Whisper (faster-whisper)
+- **Ідентифікація спікерів** — до 8 унікальних голосів (SpeechBrain ECAPA-TDNN)
+- **AI-аналіз** — через LLM (OpenAI, Anthropic, OpenRouter, Ollama)
+- **Manus Agent** — інтеграція з Manus AI для глибокого аналізу транскрипцій
+- **Експорт результатів** — у TXT та HTML/DOC формати
+- **WebSocket-з'єднання** — стрімінг аудіо з автоматичним перепідключенням
+- **Автоскейлінг** — динамічна зміна кількості воркерів залежно від навантаження
+- **Гарячі клавіші** — `Alt+Shift+R` для швидкого старту/зупинки запису
 
 ---
 
@@ -64,17 +70,38 @@ Chrome-розширення для розпізнавання мови в реа
                                             └─────────────────┘
 ```
 
+### Компоненти розширення
+
+| Компонент | Призначення |
+|-----------|-------------|
+| `manifest.json` | Маніфест Chrome Extension v3 |
+| `background.js` | Service Worker — маршрутизація команд, управління offscreen |
+| `offscreen.html/js` | Offscreen документ для захоплення аудіо та WebSocket-комунікації |
+| `audio-processor.js` | AudioWorklet — конвертація Float32 → PCM 16-bit |
+| `popup.html/css` | Головний UI розширення |
+| `popup-main.js` | Основна логіка: з'єднання, запис, LLM, налаштування |
+| `popup-ui.js` | Рендеринг UI, навігація, робота з файлами |
+| `popup-manus.js` | Інтеграція з Manus Agent, історія задач, API-ключі |
+| `popup-db.js` | IndexedDB + Chrome Storage операції |
+
+---
+
+## Вимоги
+
+### Серверна частина
+
+- **Python** 3.8+
+- **CUDA**-сумісна GPU (опціонально, для прискорення)
+- Мінімум **4GB RAM** (8GB+ для моделі `large`)
+
+### Клієнтська частина
+
+- **Google Chrome** 88+ (Manifest V3)
+- Доступ до мікрофону/вкладок для захоплення аудіо
+
 ---
 
 ## Локальний запуск
-
-### Передумови
-
-- **Python** 3.8+
-- **Redis** Server 3.x+
-- **Google Chrome** 88+
-- **CUDA**-сумісна GPU (опціонально, для прискорення)
-- Мінімум **4GB RAM** (8GB+ для моделі `large`)
 
 ### Крок 1: Клонування репозиторію
 
@@ -91,37 +118,22 @@ pip install -r requirements.txt
 cd ..
 ```
 
-### Крок 3: Запуск Redis (локально)
+**Основні залежності:**
+- `fastapi` + `uvicorn` — API сервер
+- `faster-whisper` — ASR модель
+- `speechbrain` — ідентифікація спікерів
+- `torch` + `numpy` — обчислення
 
-**macOS:**
-```bash
-brew install redis
-brew services start redis
-```
-
-**Ubuntu/Debian:**
-```bash
-sudo apt-get install redis-server
-sudo systemctl start redis
-```
-
-**Windows (через Docker):**
-```bash
-docker run -d -p 6379:6379 redis:latest
-```
-
-**Перевірка:**
-```bash
-redis-cli ping  # має повернути PONG
-```
-
-### Крок 4: Запуск ASR сервера (локально)
+### Крок 3: Запуск ASR сервера
 
 ```bash
 cd server
 python popup_server.py
 ```
-Сервер стартує на `http://localhost:8000`, WebSocket на `ws://localhost:8000/ws`
+
+Сервер стартує на:
+- HTTP API: `http://localhost:8000`
+- WebSocket: `ws://localhost:8000/ws`
 
 **З кастомними параметрами:**
 ```bash
@@ -133,27 +145,32 @@ WHISPER_MODEL_SIZE=medium NUM_WORKERS=2 python popup_server.py
 WHISPER_MODEL_SIZE=large-v3 DEVICE=cuda python popup_server.py
 ```
 
-**Повний приклад з усіма параметрами:**
+**Повний приклад:**
 ```bash
 cd server
-API_PORT=8000 REDIS_HOST=localhost REDIS_PORT=6379 WHISPER_MODEL_SIZE=large DEVICE=cuda COMPUTE_TYPE=float16 NUM_WORKERS=4 python popup_server.py
+API_PORT=8000 \
+  WHISPER_MODEL_SIZE=large \
+  DEVICE=cuda \
+  COMPUTE_TYPE=float16 \
+  NUM_WORKERS=4 \
+  python popup_server.py
 ```
 
-### Крок 5: Встановлення розширення Chrome (локально)
+### Крок 4: Встановлення розширення Chrome
 
 1. Відкрий Chrome → `chrome://extensions/`
 2. Увімкни **"Режим розробника"** (перемикач вгорі праворуч)
 3. Натисни **"Завантажити розпаковане розширення"**
 4. Вибери папку `asr_system/extension` (де знаходиться `manifest.json`)
-5. Розширення з'явиться в панелі інструментів → закріпи його
+5. Закріпи іконку розширення на панелі інструментів
 
-### Крок 6: Підключення розширення до локального сервера
+### Крок 5: Підключення до сервера
 
 1. Натисни іконку розширення в Chrome
 2. Перейди на вкладку **Сервер** (🌐)
 3. В полі "Адреса сервера" введи: `ws://localhost:8000/ws`
 4. Натисни **"Підключити"**
-5. Статус має змінитися на 🟢 "Підключено"
+5. Статус має змінитися на 🟢 "Сервер підключений"
 
 ---
 
@@ -163,26 +180,31 @@ API_PORT=8000 REDIS_HOST=localhost REDIS_PORT=6379 WHISPER_MODEL_SIZE=large DEVI
 
 | Змінна | Опис | За замовчуванням |
 |--------|------|------------------|
-| `REDIS_HOST` | Хост Redis | `localhost` |
-| `REDIS_PORT` | Порт Redis | `6379` |
-| `REDIS_DB` | База даних Redis | `0` |
-| `WHISPER_MODEL_SIZE` | Розмір моделі Whisper (`tiny`/`base`/`small`/`medium`/`large`/`large-v3`) | `large` |
-| `DEVICE` | Пристрій (`cuda`/`cpu`) | авто |
+| `WHISPER_MODEL_SIZE` | Розмір моделі (`tiny`/`base`/`small`/`medium`/`large`/`large-v3`) | `large` |
+| `DEVICE` | Пристрій (`cuda`/`cpu`) | авто-визначення |
 | `COMPUTE_TYPE` | Тип обчислень (`float16`/`int8`/`float32`) | `float16` |
-| `NUM_WORKERS` | Кількість воркерів | `4` |
+| `NUM_WORKERS` | Початкова кількість воркерів | `4` |
 | `API_PORT` | Порт API сервера | `8000` |
 
 ### Налаштування розширення
 
-1. Натисни іконку розширення → вкладка **Сервер**
-2. Вкажи адресу WebSocket (`ws://localhost:8000/ws`)
-3. Увімкни "Автопідключення" для автоматичного з'єднання при старті
+#### Сервер
+- Вкладка **Сервер** → вкажи адресу WebSocket
+- Увімкни "Автопідключення" для автоматичного з'єднання при старті
+- Увімкни "Перепідключення при розриві" для стійкості з'єднання
 
-### Налаштування LLM (опціонально)
+#### LLM (опціонально)
+- Вкладка **LLM** → вибери провайдера (OpenAI, Anthropic, OpenRouter, Ollama, Custom)
+- Введи API-ключ та налаштуй модель
+- Налаштуй системний промпт, температуру та ліміт токенів
+- Увімкни "Автообробка" для автоматичної обробки після транскрибації
 
-1. Вкладка **LLM** → вибери провайдера
-2. Введи API-ключ
-3. Налаштуй модель та параметри генерації
+#### Manus Agent (опціонально)
+- Вкладка **Manus Agent** → введи `x-manus-api-key`
+- Вибери профіль агента (`manus-1.6`, `manus-1.6-lite`, `manus-1.6-max`)
+- Налаштуй системний промпт або вибери пресет (Meeting Assistant, Research Agent, Code Reviewer, Custom)
+- Увімкни "Автоматично відправляти в Manus після зупинки запису"
+- Увімкни "Інтерактивний режим" для можливості продовження діалогу
 
 ---
 
@@ -191,12 +213,13 @@ API_PORT=8000 REDIS_HOST=localhost REDIS_PORT=6379 WHISPER_MODEL_SIZE=large DEVI
 ### Базовий сценарій
 
 1. **Запусти сервер** — `cd server && python popup_server.py`
-2. **Підключись до сервера** — натисни "Підключити" в розширенні
+2. **Підключись** — натисни "Підключити" в розширенні
 3. **Почни запис** — кнопка мікрофона або `Alt+Shift+R`
-4. **Вибери вкладку** — Chrome запросить дозвіл на захоплення аудіо
-5. **Спостерігай транскрипцію** — текст з'являється в реальному часі
-6. **Зупини запис** — натисни кнопку ще раз
-7. **Проаналізуй** — використай LLM або Manus Agent
+4. **Дозвіл на аудіо** — Chrome запросить дозвіл на захоплення аудіо з вкладки
+5. **Спостерігай транскрипцію** — текст з'являється в реальному часі з таймкодами
+6. **Зупини запис** — натисни кнопку ще раз або `Alt+Shift+R`
+7. **Проаналізуй** — використай LLM або Manus Agent для обробки тексту
+8. **Експортуй** — збережи результат у TXT або DOC
 
 ### Гарячі клавіші
 
@@ -206,14 +229,21 @@ API_PORT=8000 REDIS_HOST=localhost REDIS_PORT=6379 WHISPER_MODEL_SIZE=large DEVI
 
 ### Формати експорту
 
-- **TXT** — чистий текст
-- **HTML/DOC** — форматований документ з таймкодами
+- **TXT** — чистий текст з таймкодами
+- **DOC** — форматований HTML-документ з кольоровими таймкодами
+
+### Робота з документами (Manus Agent)
+
+- **Імпорт** — перетягни файли (TXT, MD, DOC, PDF, JSON, CSV, код) у зону завантаження
+- **Експорт** — збережи прикріплені документи у форматі JSON
+- **Отримані документи** — завантаж файли, згенеровані агентом під час виконання задачі
+- **Історія задач** — переглядай, продовжуй та видаляй попередні сесії аналізу
 
 ---
 
 ## API
 
-### WebSocket Audio Stream (локальний)
+### WebSocket Audio Stream
 
 ```javascript
 const ws = new WebSocket('ws://localhost:8000/ws/audio/{session_id}');
@@ -232,9 +262,11 @@ ws.onmessage = (event) => {
 
 | Метод | Ендпоінт | Опис |
 |-------|----------|------|
-| `GET` | `http://localhost:8000/health` | Перевірка здоров'я сервера |
-| `GET` | `http://localhost:8000/stats` | Статистика сервера (сесії, черга, воркери) |
-| `GET` | `http://localhost:8000/scale-stats` | Статус автоскейлінгу |
+| `GET` | `/health` | Перевірка здоров'я сервера |
+| `GET` | `/stats` | Статистика (сесії, черга, воркери) |
+| `GET` | `/scale-stats` | Статистика автоскейлінгу |
+| `WS` | `/ws` | Автоматична сесія (генерується UUID) |
+| `WS` | `/ws/audio/{session_id}` | Кастомна сесія |
 
 ---
 
@@ -243,26 +275,26 @@ ws.onmessage = (event) => {
 ```
 asr_system/
 ├── server/
-│   ├── popup_server.py          # ASR сервер (FastAPI + Whisper + Redis)
-│   └── requirements.txt           # Python-залежності
+│   ├── popup_server.py          # ASR сервер (FastAPI + Whisper)
+│   └── requirements.txt         # Python-залежності
 │
 └── extension/
-    ├── manifest.json              # Маніфест Chrome-розширення (v3)
+    ├── manifest.json              # Маніфест Chrome Extension v3
     ├── background.js              # Service Worker — маршрутизація команд
     ├── offscreen.html             # Offscreen документ для аудіо
     ├── offscreen.js               # Логіка захоплення аудіо + WebSocket
     ├── audio-processor.js         # AudioWorklet процесор (PCM 16-bit)
-    ├── popap.html                 # Головний UI розширення
+    ├── popup.html                 # Головний UI розширення
     ├── popup.css                  # Стилі інтерфейсу
     ├── popup-main.js              # Основна логіка (з'єднання, запис, LLM)
-    ├── popup-ui.js                # Рендеринг UI та навігація
-    ├── popup-manus.js             # Інтеграція з Manus Agent + історія задач
-    └── popup-db.js                # IndexedDB + Chrome Storage операції
+    ├── popup-ui.js                # Рендеринг UI, навігація, файли
+    ├── popup-manus.js             # Інтеграція з Manus Agent + історія
+    └── popup-db.js                # IndexedDB + Chrome Storage
 ```
 
 ---
 
-## Розробка та відлагодження
+## Розробка
 
 ### Запуск сервера в режимі розробки
 
@@ -273,23 +305,56 @@ uvicorn popup_server:app --reload --port 8000
 
 ### Відлагодження розширення
 
-- **Popup**: Правий клік по іконці → "Перевірити"
-- **Background**: `chrome://extensions/` → "Service Worker"
-- **Offscreen**: `chrome://extensions/` → "Offscreen Document"
+| Компонент | Як відкрити |
+|-----------|-------------|
+| **Popup** | Правий клік по іконці → "Перевірити" (Inspect popup) |
+| **Background** | `chrome://extensions/` → "Service Worker" (посилання "service worker") |
+| **Offscreen** | `chrome://extensions/` → "Offscreen Document" |
 
-### Моніторинг локального сервера
+### Моніторинг сервера
 
 ```bash
 # Логи сервера
 tail -f logs/asr_server.log
 
-# Redis
-redis-cli monitor
-
 # Статистика
 curl http://localhost:8000/stats
 curl http://localhost:8000/scale-stats
 ```
+
+### Тестування WebSocket
+
+```bash
+# Перевірка з'єднання
+wscat -c ws://localhost:8000/ws
+```
+
+---
+
+## Технічні деталі
+
+### Аудіопотік
+
+- **Sample rate:** 16000 Hz
+- **Формат:** 16-bit PCM, mono
+- **Буферизація:** 3-секундні чанки
+- **Кодування:** Float32 → Int16 (AudioWorklet)
+
+### Ідентифікація спікерів
+
+- **Модель:** SpeechBrain ECAPA-TDNN (spkrec-ecapa-voxceleb)
+- **Поріг схожості:** 0.58 (cosine similarity)
+- **Максимум спікерів:** 8
+- **Оновлення ембеддингів:** експоненційне згладжування (α=0.1)
+
+### Автоскейлінг
+
+- **Мінімум воркерів:** 1
+- **Максимум воркерів:** 8
+- **Поріг масштабування вгору:** черга > 3 задачі
+- **Поріг масштабування вниз:** черга = 0
+- **Cooldown:** 5 секунд між змінами
+- **Перевірка:** кожні 3 секунди
 
 ---
 
@@ -297,10 +362,17 @@ curl http://localhost:8000/scale-stats
 
 - [OpenAI Whisper](https://github.com/openai/whisper) — модель розпізнавання мови
 - [faster-whisper](https://github.com/SYSTRAN/faster-whisper) — оптимізована імплементація
+- [SpeechBrain](https://speechbrain.github.io/) — ідентифікація спікерів
+- [FastAPI](https://fastapi.tiangolo.com/) — веб-фреймворк
+
+---
+
+## Ліцензія
+
+Цей проєкт ліцензовано під [MIT License](LICENSE).
 
 ---
 
 **Створено для покращення комунікації та продуктивності.**
 
-*Якщо у вас є питання або пропозиції — відкривайте Issue.*
-
+*Якщо у вас є питання або пропозиції — відкривайте [Issue](https://github.com/flopiy/asr_system/issues).*
