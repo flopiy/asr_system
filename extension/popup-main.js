@@ -1,5 +1,3 @@
-// popup-main.js — Main app, server connection, LLM processing
-
 // ==================== STORAGE LISTENER & POLLING ====================
 
 function startStorageListener() {
