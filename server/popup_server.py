@@ -396,9 +396,9 @@ class APIGateway:
                 data = await self.redis.hgetall(key)
                 if data:
                     workers.append({
-                        "id": key.decode().split(":")[1],
-                        "sessions": int(data.get(b"active_sessions", 0)),
-                        "queue": int(data.get(b"queue_length", 0))
+                        "id": key.split(":")[1],          # key вже str (decode_responses=True)
+                        "sessions": int(data.get("active_sessions", 0)),   # виправлено: str-ключ
+                        "queue": int(data.get("queue_length", 0))          # виправлено: str-ключ
                     })
             return {"active_sessions": len(self.ws_clients), "pending": qlen, "workers": workers}
 
@@ -506,6 +506,9 @@ class AutoScaler:
                     "queue_length": queue_length,
                     "num_workers": current_workers
                 })
+                # [FIX] Memory leak protection: обрізаємо стару історію
+                if len(self.stats["history"]) > 1000:
+                    self.stats["history"] = self.stats["history"][-500:]
                 
                 now = time.time()
                 if now - self.last_scale_time < self.cooldown:
@@ -514,7 +517,9 @@ class AutoScaler:
                 
                 # Масштабування вгору
                 if queue_length > self.scale_up_threshold and current_workers < self.max_workers:
-                    new_worker_id = f"worker_{current_workers}"
+                    # [FIX] UUID запобігає колізіям після scale down → up
+                    unique_id = str(uuid4())[:8]
+                    new_worker_id = f"worker_{unique_id}"
                     worker = ASRWorker(
                         new_worker_id, 
                         self.server.redis, 
