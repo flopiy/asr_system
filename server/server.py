@@ -396,9 +396,9 @@ class APIGateway:
                 data = await self.redis.hgetall(key)
                 if data:
                     workers.append({
-                        "id": key.split(":")[1],          # key вже str (decode_responses=True)
-                        "sessions": int(data.get("active_sessions", 0)),   # виправлено: str-ключ
-                        "queue": int(data.get("queue_length", 0))          # виправлено: str-ключ
+                        "id": key.split(":")[1],          # key вже str (decode_responses=True)Expand commentComment on line R399Code has comments. Press enter to view.
+                        "sessions": int(data.get("active_sessions", 0)),   # виправлено: str-ключExpand commentComment on line R400Code has comments. Press enter to view.
+                        "queue": int(data.get("queue_length", 0))          # виправлено: str-ключExpand commentComment on line R401Code has comments. Press enter to view.
                     })
             return {"active_sessions": len(self.ws_clients), "pending": qlen, "workers": workers}
 
@@ -489,35 +489,35 @@ class AutoScaler:
             "max_workers_reached": 0,
             "history": []  # (timestamp, queue_length, num_workers)
         }
-    
+
     async def run(self):
         self.running = True
         logger.info("📊 AutoScaler started (min=%d, max=%d)", 
                      self.min_workers, self.max_workers)
-        
+
         while self.running:
             try:
                 queue_length = await self.server.redis.llen("audio_tasks")
                 current_workers = len(self.server.workers)
-                
+
                 # Записуємо історію
                 self.stats["history"].append({
                     "timestamp": time.time(),
                     "queue_length": queue_length,
                     "num_workers": current_workers
                 })
-                # [FIX] Memory leak protection: обрізаємо стару історію
+                # [FIX] Memory leak protection: обрізаємо стару історіюExpand commentComment on line R509Code has comments. Press enter to view.
                 if len(self.stats["history"]) > 1000:
                     self.stats["history"] = self.stats["history"][-500:]
-                
+
                 now = time.time()
                 if now - self.last_scale_time < self.cooldown:
                     await asyncio.sleep(self.check_interval)
                     continue
-                
+
                 # Масштабування вгору
                 if queue_length > self.scale_up_threshold and current_workers < self.max_workers:
-                    # [FIX] UUID запобігає колізіям після scale down → up
+                    # [FIX] UUID запобігає колізіям після scale down → upExpand commentComment on line R520Code has comments. Press enter to view.
                     unique_id = str(uuid4())[:8]
                     new_worker_id = f"worker_{unique_id}"
                     worker = ASRWorker(
@@ -532,7 +532,7 @@ class AutoScaler:
                     self.stats["scale_up_events"] += 1
                     logger.info("⬆️ AutoScaler: +1 worker (queue=%d, workers=%d)", 
                                queue_length, len(self.server.workers))
-                
+
                 # Масштабування вниз
                 elif queue_length <= self.scale_down_threshold and current_workers > self.min_workers:
                     worker = self.server.workers.pop()
@@ -541,31 +541,31 @@ class AutoScaler:
                     self.stats["scale_down_events"] += 1
                     logger.info("⬇️ AutoScaler: -1 worker (queue=%d, workers=%d)", 
                                queue_length, len(self.server.workers))
-                
+
                 # Оновлюємо максимум
                 if current_workers >= self.max_workers:
                     self.stats["max_workers_reached"] += 1
-                
+
             except Exception as e:
                 logger.error("AutoScaler error: %s", e)
-            
+
             await asyncio.sleep(self.check_interval)
-        
+
         logger.info("AutoScaler stopped.")
-    
+
     async def stop(self):
         self.running = False
-    
+
     def get_report(self) -> dict:
         """Генерує звіт про масштабування."""
         if not self.stats["history"]:
             return {"error": "no data"}
-        
+
         history = self.stats["history"]
         queue_lengths = [h["queue_length"] for h in history]
         worker_counts = [h["num_workers"] for h in history]
         timestamps = [h["timestamp"] for h in history]
-        
+
         return {
             "scale_up_events": self.stats["scale_up_events"],
             "scale_down_events": self.stats["scale_down_events"],
@@ -616,21 +616,21 @@ class ASRServer:
         for i in range(1):  # Починаємо з 1
             worker = ASRWorker(f"worker_{i}", self.redis, self.speaker_id, self.whisper_model)
             self.workers.append(worker)
-        
+
         # Створюємо AutoScaler
         self.scaler = AutoScaler(self)
-        
+
         self.router = IntelligentRouter(self.redis)
         self.gateway = APIGateway(self.redis)
-        
+
         # Додаємо ендпоінт для статистики масштабування
         self.gateway.app.add_api_route("/scale-stats", self.get_scale_stats)
-        
+
         tasks = [asyncio.create_task(w.run()) for w in self.workers]
         tasks.append(asyncio.create_task(self.router.run()))
         tasks.append(asyncio.create_task(self.gateway.run()))
         tasks.append(asyncio.create_task(self.scaler.run()))  # НОВЕ
-        
+
         logger.info("Server started (workers=%d, port=%d, auto-scaling ENABLED)", 
                      len(self.workers), API_PORT)
         try:
@@ -639,14 +639,14 @@ class ASRServer:
             pass
         finally:
             await self.stop()
-    
+
     async def get_scale_stats(self):
         """Повертає статистику авто-масштабування."""
         if self.scaler:
             report = self.scaler.get_report()
             return {"auto_scaling": report}
         return {"auto_scaling": "not available"}
-    
+
     async def stop(self):
         if self.scaler:
             await self.scaler.stop()
