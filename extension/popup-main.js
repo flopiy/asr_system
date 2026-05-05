@@ -142,7 +142,7 @@ async function processWithLLM() {
   try {
     const s = await chrome.storage.local.get(['llm_provider', 'llm_apiKey', 'llm_model', 'llm_endpoint', 'llm_prompt', 'llm_temp', 'llm_maxTokens']);
     const provider = s.llm_provider || 'openrouter';
-    const apiKey = s.llm_apiKey || '';
+    const apiKey = await decryptApiKey(s.llm_apiKey || '');
     if (!apiKey && provider !== 'local') { alert('Введіть API Key'); return; }
     let result = '';
     for (let attempt = 1; attempt <= 3; attempt++) {
@@ -198,9 +198,11 @@ async function callOllama(baseUrl, model, systemPrompt, userText) {
 }
 
 async function saveLLMConfig() {
+  const rawApiKey = document.getElementById('apiKey')?.value || '';
+  const encryptedApiKey = await encryptApiKey(rawApiKey);
   const config = {
     llm_provider: document.getElementById('llmProvider')?.value || 'openrouter',
-    llm_apiKey: document.getElementById('apiKey')?.value || '',
+    llm_apiKey: encryptedApiKey,
     llm_model: document.getElementById('modelName')?.value || '',
     llm_endpoint: document.getElementById('apiEndpoint')?.value || '',
     llm_prompt: document.getElementById('systemPrompt')?.value || '',
@@ -211,7 +213,13 @@ async function saveLLMConfig() {
   };
   await chrome.storage.local.set(config);
   const configs = (await chrome.storage.local.get('llm_configs')).llm_configs || [];
-  configs.push({ id: Date.now(), name: `${config.llm_provider} — ${config.llm_model || 'default'}`, ...config, createdAt: new Date().toLocaleString() });
+  configs.push({
+    id: Date.now(),
+    name: `${config.llm_provider} — ${config.llm_model || 'default'}`,
+    ...config,
+    apiKey: encryptedApiKey, // зберігаємо зашифрований ключ в конфігурації
+    createdAt: new Date().toLocaleString()
+  });
   await chrome.storage.local.set({ llm_configs: configs });
   await loadLLMConfigs();
   const btn = document.getElementById('saveConfig'); const orig = btn.innerHTML;

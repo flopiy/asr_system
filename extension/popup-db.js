@@ -1,5 +1,3 @@
-// popup-db.js — Database & Storage operations
-
 const DB_NAME = 'ASRTranscriberDocs';
 const DB_VERSION = 1;
 let db = null;
@@ -99,6 +97,7 @@ async function loadSettings() {
   if (result.reconnectOnClose !== undefined && reconnectOnClose) reconnectOnClose.checked = result.reconnectOnClose;
 }
 
+
 async function loadTranscriptFromStorage() {
   const result = await chrome.storage.local.get(['asr_fullTranscript', 'asr_processedTranscript']);
   fullTranscript = result.asr_fullTranscript || '';
@@ -113,7 +112,7 @@ async function loadLLMSettings() {
     'llm_prompt', 'llm_temp', 'llm_maxTokens', 'llm_autoProcess', 'llm_saveHistory'
   ]);
   if (document.getElementById('llmProvider') && res.llm_provider) document.getElementById('llmProvider').value = res.llm_provider;
-  if (document.getElementById('apiKey') && res.llm_apiKey) document.getElementById('apiKey').value = res.llm_apiKey;
+  if (document.getElementById('apiKey') && res.llm_apiKey) document.getElementById('apiKey').value = await decryptApiKey(res.llm_apiKey);
   if (document.getElementById('modelName') && res.llm_model) document.getElementById('modelName').value = res.llm_model;
   if (document.getElementById('apiEndpoint') && res.llm_endpoint) document.getElementById('apiEndpoint').value = res.llm_endpoint;
   if (document.getElementById('systemPrompt') && res.llm_prompt) document.getElementById('systemPrompt').value = res.llm_prompt;
@@ -154,7 +153,7 @@ async function applyLLMConfig(id) {
   const cfg = (res.llm_configs || []).find(c => c.id === id);
   if (!cfg) return;
   if (document.getElementById('llmProvider')) document.getElementById('llmProvider').value = cfg.provider;
-  if (document.getElementById('apiKey')) document.getElementById('apiKey').value = cfg.apiKey;
+  if (document.getElementById('apiKey')) document.getElementById('apiKey').value = await decryptApiKey(cfg.apiKey);
   if (document.getElementById('modelName')) document.getElementById('modelName').value = cfg.model;
   if (document.getElementById('apiEndpoint')) document.getElementById('apiEndpoint').value = cfg.endpoint;
   if (document.getElementById('systemPrompt')) document.getElementById('systemPrompt').value = cfg.prompt;
@@ -178,7 +177,7 @@ async function loadManusSettings() {
   ]);
   
   if (document.getElementById('manusApiKey') && res.manus_apiKey) 
-    document.getElementById('manusApiKey').value = res.manus_apiKey;
+    document.getElementById('manusApiKey').value = await decryptApiKey(res.manus_apiKey);
   if (document.getElementById('manusProfile') && res.manus_profile) 
     document.getElementById('manusProfile').value = res.manus_profile;
   if (document.getElementById('manusLocale')) 

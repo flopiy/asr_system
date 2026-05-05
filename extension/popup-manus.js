@@ -14,12 +14,18 @@ let manusTaskHistory = [];
 
 async function loadManusApiKeys() {
   const res = await chrome.storage.local.get('manus_api_keys');
-  manusApiKeys = res.manus_api_keys || [];
+  const stored = res.manus_api_keys || [];
+  manusApiKeys = await Promise.all(
+    stored.map(async k => ({ ...k, key: await decryptApiKey(k.key) }))
+  );
   renderManusApiKeys();
 }
 
 async function saveManusApiKeys() {
-  await chrome.storage.local.set({ manus_api_keys: manusApiKeys });
+  const encrypted = await Promise.all(
+    manusApiKeys.map(async k => ({ ...k, key: await encryptApiKey(k.key) }))
+  );
+  await chrome.storage.local.set({ manus_api_keys: encrypted });
   renderManusApiKeys();
 }
 
@@ -214,8 +220,9 @@ async function testManusConnection() {
 }
 
 async function saveManusConfig() {
+  const rawApiKey = document.getElementById('manusApiKey')?.value || '';
   const config = {
-    manus_apiKey: document.getElementById('manusApiKey')?.value || '',
+    manus_apiKey: await encryptApiKey(rawApiKey),
     manus_profile: document.getElementById('manusProfile')?.value || 'manus-1.6',
     manus_locale: document.getElementById('manusLocale')?.value || '',
     manus_prompt: document.getElementById('manusPrompt')?.value || '',
@@ -224,10 +231,10 @@ async function saveManusConfig() {
     manus_preset: document.querySelector('.agent-preset-card.active')?.dataset.preset || 'meeting'
   };
   await chrome.storage.local.set(config);
-  manusApiKey = config.manus_apiKey;
-  if (config.manus_apiKey && !manusApiKeys.find(k => k.key === config.manus_apiKey)) {
-    const prev = config.manus_apiKey.substring(0,8) + '...' + config.manus_apiKey.slice(-4);
-    manusApiKeys.push({ id: Date.now(), name: `Ключ (${prev})`, key: config.manus_apiKey, preview: prev, createdAt: new Date().toISOString() });
+  manusApiKey = rawApiKey; // в пам'яті зберігаємо plaintext
+  if (rawApiKey && !manusApiKeys.find(k => k.key === rawApiKey)) {
+    const prev = rawApiKey.substring(0,8) + '...' + rawApiKey.slice(-4);
+    manusApiKeys.push({ id: Date.now(), name: `Ключ (${prev})`, key: rawApiKey, preview: prev, createdAt: new Date().toISOString() });
     await saveManusApiKeys();
   }
   const btn = document.getElementById('saveManusConfig'); const orig = btn.innerHTML;
