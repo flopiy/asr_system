@@ -190,7 +190,7 @@ API_PORT=8000 REDIS_HOST=localhost REDIS_PORT=6379 WHISPER_MODEL_SIZE=large DEVI
 
 ### Базовий сценарій
 
-1. **Запусти сервер** — `cd server && python popup_server.py`
+1. **Запусти сервер** — `cd server && python server.py`
 2. **Підключись до сервера** — натисни "Підключити" в розширенні
 3. **Почни запис** — кнопка мікрофона або `Alt+Shift+R`
 4. **Вибери вкладку** — Chrome запросить дозвіл на захоплення аудіо
