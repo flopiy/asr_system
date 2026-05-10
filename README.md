@@ -119,7 +119,7 @@ redis-cli ping  # має повернути PONG
 
 ```bash
 cd server
-python popup_server.py
+python server.py
 ```
 Сервер стартує на `http://localhost:8000`, WebSocket на `ws://localhost:8000/ws`
 
