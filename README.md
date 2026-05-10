@@ -125,18 +125,18 @@ python popup_server.py
 
 **З кастомними параметрами:**
 ```bash
-WHISPER_MODEL_SIZE=medium NUM_WORKERS=2 python popup_server.py
+WHISPER_MODEL_SIZE=medium NUM_WORKERS=2 python server.py
 ```
 
 **З GPU-прискоренням:**
 ```bash
-WHISPER_MODEL_SIZE=large-v3 DEVICE=cuda python popup_server.py
+WHISPER_MODEL_SIZE=large-v3 DEVICE=cuda python server.py
 ```
 
 **Повний приклад з усіма параметрами:**
 ```bash
 cd server
-API_PORT=8000 REDIS_HOST=localhost REDIS_PORT=6379 WHISPER_MODEL_SIZE=large DEVICE=cuda COMPUTE_TYPE=float16 NUM_WORKERS=4 python popup_server.py
+API_PORT=8000 REDIS_HOST=localhost REDIS_PORT=6379 WHISPER_MODEL_SIZE=large DEVICE=cuda COMPUTE_TYPE=float16 NUM_WORKERS=4 python server.py
 ```
 
 ### Крок 5: Встановлення розширення Chrome (локально)
@@ -243,7 +243,7 @@ ws.onmessage = (event) => {
 ```
 asr_system/
 ├── server/
-│   ├── popup_server.py          # ASR сервер (FastAPI + Whisper + Redis)
+│   ├── server.py                  # ASR сервер (FastAPI + Whisper + Redis)
 │   └── requirements.txt           # Python-залежності
 │
 └── extension/
@@ -268,7 +268,7 @@ asr_system/
 
 ```bash
 cd server
-uvicorn popup_server:app --reload --port 8000
+uvicorn server:app --reload --port 8000
 ```
 
 ### Відлагодження розширення
