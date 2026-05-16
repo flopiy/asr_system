@@ -1,5 +1,3 @@
-// ==================== STORAGE LISTENER & POLLING ====================
-
 function startStorageListener() {
   chrome.storage.onChanged.addListener((changes, areaName) => {
     if (areaName !== 'local') return;
