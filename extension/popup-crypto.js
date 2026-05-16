@@ -1,5 +1,3 @@
-// popup-crypto.js — AES-GCM шифрування API-ключів через Web Crypto API (NFR-4)
-
 const CRYPTO_KEY_STORAGE = 'aes_gcm_master_key';
 
 // Повертає CryptoKey; при першому запуску генерує ключ і зберігає у storage
