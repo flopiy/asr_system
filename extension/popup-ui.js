@@ -1,5 +1,3 @@
-// popup-ui.js — UI rendering & event binding
-
 let isRecording = false;
 let isConnected = false;
 let fullTranscript = "";
