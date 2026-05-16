@@ -1,5 +1,3 @@
-// popup-manus.js — Manus Agent + API Keys + Task History
-
 let manusTaskId = null;
 let manusPollingInterval = null;
 let manusApiKey = "";
