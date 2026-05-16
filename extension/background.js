@@ -1,8 +1,6 @@
 let currentServerUrl = "ws://localhost:8000";
 let activeTabId = null;
 
-// ─── FIX: замість прапорця offscreenReady зберігаємо Promise ініціалізації,
-// щоб уникнути race condition — повторні виклики чекають той самий Promise.
 let offscreenInitPromise = null;
 
 async function ensureOffscreenDocument() {
