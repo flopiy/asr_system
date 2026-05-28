@@ -413,7 +413,7 @@ class APIGateway:
             while True:
                 data = await websocket.receive_bytes()
                 if len(data) % 2: data = data[:-1]
-                chunk = np.frombuffer(data, dtype=np.int16).astype(np.float32) / 32767.0
+                chunk = np.frombuffer(data, dtype=np.int16).astype(np.float32) / 32768.0
                 if is_silence(chunk):
                     continue
                 buf.buffer_chunks.append(chunk)
