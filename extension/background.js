@@ -287,7 +287,7 @@ chrome.commands.onCommand.addListener((command) => {
   }
 });
 
-function initBackground() {
+async function initBackground() {
   chrome.storage.local.get(['lastServerUrl', 'autoConnect'], async (res) => {
     if (res.lastServerUrl) {
       currentServerUrl = res.lastServerUrl;
