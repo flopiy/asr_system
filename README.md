@@ -256,6 +256,7 @@ asr_system/
     ├── popup.css                  # Стилі інтерфейсу
     ├── popup-main.js              # Основна логіка (з'єднання, запис, LLM)
     ├── popup-ui.js                # Рендеринг UI та навігація
+    ├── popup-crypto.js            # Шифрування ключів 
     ├── popup-manus.js             # Інтеграція з Manus Agent + історія задач
     └── popup-db.js                # IndexedDB + Chrome Storage операції
 ```
